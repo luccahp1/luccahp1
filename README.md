@@ -155,13 +155,18 @@ London ON, May 2025 to present, across consecutive terms.
 ## Products I own end to end
 
 **Atrio** is an AI front desk. A phone receptionist that learns a business by reading its
-website, then answers calls like it has worked there for years. No menus, no "press 2".
-`next.js` `vapi` `claude api`
+website, then answers calls like it has worked there for years. No menus, no "press 2". It
+started on a hosted voice platform and now runs on a bridge I wrote instead: G.711 audio
+streamed untranscoded between SignalWire and an Inworld speech-to-speech session, about
+640-820 ms from the caller talking to it talking back. It lives on my own Ubuntu box under
+systemd, behind a 20-check preflight and a watchdog that probes the live call path every
+10 minutes, because the number once went quiet for five days and nothing alerted me.
+`node` `signalwire` `inworld` `claude api` `websockets`
 
 **Outpace** is speed-to-lead. It answers a business's new leads within minutes, in the owner's
 own voice, and keeps following up until a human replies. Built for trades that leak leads on
 nights and weekends, because the first company to answer usually wins the job.
-`next.js` `claude` `turso`
+`next.js` `claude api` `libsql`
 
 Both are mine end to end: product design, unit economics, code, deploy, and the 2am when
 something breaks.
@@ -178,9 +183,9 @@ using e-transfer. Report cards after every visit are the moat.
 |---|---|
 | **languages** | Java, Python, JavaScript/TypeScript, SQL, C++ |
 | **backend** | Spring Boot, Spring Boot Admin, REST, MVC, JWT/cookie auth, Node, Next.js |
-| **ai** | Claude API, voice agents, prompt and agent design, cost and limit engineering |
+| **ai** | Claude API, realtime speech-to-speech voice, prompt and agent design, cost and limit engineering |
 | **frontend** | React/Next.js, Tailwind, and a lot of plain handwritten CSS |
-| **data & ops** | Postgres, MySQL, SQLite/Turso, Ubuntu, nginx, systemd, Tailscale, Vercel |
+| **data & ops** | Postgres, MySQL, SQLite/libSQL, Ubuntu, nginx, systemd, Tailscale, ngrok, Vercel |
 | **practices** | Agile, debugging other people's legacy code, technical writing, regression testing |
 
 ---
