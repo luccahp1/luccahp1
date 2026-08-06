@@ -24,7 +24,7 @@ phone. Lately I have been teaching robots to pick it up politely instead.
 
 ## Things I wrote from scratch, with no dependencies
 
-Three libraries with no third-party code in them, and none in their tests either. `javac` and
+Four libraries with no third-party code in them, and none in their tests either. `javac` and
 `java` are the entire toolchain, which means CI needs nothing but a JDK.
 
 | | what it is | the interesting part |
@@ -32,6 +32,10 @@ Three libraries with no third-party code in them, and none in their tests either
 | **[needle](https://github.com/luccahp1/needle)** | A regex engine. Parser, Thompson NFA construction, parallel state-set simulation. | `(a+)+b` against **50,000 characters in 6ms**. 4x the input costs 3.9x the time, because it cannot backtrack. |
 | **[ledger](https://github.com/luccahp1/ledger)** | A crash-safe key/value store on a write-ahead log. | The crash tests tear real records in half on disk, flip real bits, and forge a record claiming a two billion byte key. |
 | **[sluice](https://github.com/luccahp1/sluice)** | Five rate limiting algorithms behind one interface. | The token bucket is lock-free. Eight threads, 40,000 attempts, a burst of 100, and **exactly 100** get through. |
+| **[quilt](https://github.com/luccahp1/quilt)** | Eight CRDTs, including an RGA sequence. Two replicas edit offline with no coordinator and end up byte-identical. | **49 tests, and I proved they work by breaking the library 11 times.** All 11 mutants died. Zero compiler warnings at `-Xlint:all`, CI on JDK 17, 21 and 24. |
+
+There is also **[Khronos](https://github.com/luccahp1/Khronos)**, a C++20 multi-calendar date
+library built on Julian Day Numbers, for when I want to be wrong in a different language.
 
 <details>
 <summary><b>How I know those tests are not decorative</b></summary>
@@ -58,6 +62,22 @@ FAIL  CORRUPTION: a flipped bit is caught by the checksum
 
 One test fails, everything else stays green. That is what tells you the failure is specific and
 the test is actually load-bearing.
+
+With `quilt` I stopped doing this by hand and ran the whole campaign: eleven realistic bugs, one
+at a time, each one a mistake somebody could actually make.
+
+| mutation | result |
+|---|---|
+| `GCounter` merges by sum instead of max | killed, 44/49 |
+| `GSet` merges by intersection instead of union | killed, 47/49 |
+| `LwwRegister` drops the replica tiebreak on equal timestamps | killed, 46/49 |
+| `Rga` uses a per-replica counter instead of a Lamport clock | killed, 47/49 |
+| `OrSet.remove` retires every dot, not just observed ones | **killed, 48/49** |
+| ...and six more | all killed |
+
+Eleven for eleven. The interesting row is the last one: a single test stood between that bug and a
+green build, and it is exactly the add-wins property - the thing an example-based test would be
+least likely to think to cover. That one test is the reason I trust the other forty-eight.
 
 </details>
 
@@ -158,14 +178,23 @@ London ON, May 2025 to present, across consecutive terms.
 website, then answers calls like it has worked there for years. No menus, no "press 2". It
 started on a hosted voice platform and now runs on a bridge I wrote instead: G.711 audio
 streamed untranscoded between SignalWire and an Inworld speech-to-speech session, about
-640-820 ms from the caller talking to it talking back. It lives on my own Ubuntu box under
-systemd, behind a 20-check preflight and a watchdog that probes the live call path every
-10 minutes, because the number once went quiet for five days and nothing alerted me.
+640-820 ms from the caller talking to it talking back. Untranscoded is the point: the audio never
+becomes text and back again, which is the round trip most voice stacks pay for twice.
+
+The reading-the-website part is a Claude API distiller: it crawls a client's site and builds the
+answer set the agent works from, which is also where I learned to check a model's output instead
+of trusting it. It once truncated a fact mid-sentence, and a truncated fact is worse than a
+missing one, because the agent will confidently finish the thought itself.
+
+It lives on my own Ubuntu box under systemd, behind a 20-check preflight and a watchdog that
+probes the live call path every 10 minutes, because the number once went quiet for five days and
+nothing alerted me.
 `node` `signalwire` `inworld` `claude api` `websockets`
 
 **Outpace** is speed-to-lead. It answers a business's new leads within minutes, in the owner's
 own voice, and keeps following up until a human replies. Built for trades that leak leads on
-nights and weekends, because the first company to answer usually wins the job.
+nights and weekends, because the first company to answer usually wins the job. 40 unit tests, and
+parked on purpose - one product at a time gets my evenings, and right now that is Atrio.
 `next.js` `claude api` `libsql`
 
 Both are mine end to end: product design, unit economics, code, deploy, and the 2am when
